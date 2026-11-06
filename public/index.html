@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#07080d" />
+  <meta name="description" content="TraceProof is a local-first QA workspace for turning reproducible bug reports into browser evidence and Playwright tests." />
+  <title>TraceProof · Quality Engineering Workspace</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="/jszip.min.js" defer></script>
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <a class="logo-lockup" href="#overview" data-view-link="overview" aria-label="TraceProof overview">
+      <span class="logo-glyph" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span><strong>TraceProof</strong><small>REPRODUCTION STUDIO</small></span>
+    </a>
+    <nav class="primary-nav" role="tablist" aria-label="Application sections">
+      <button class="nav-tab active" role="tab" aria-selected="true" data-view="overview"><span>◈</span>Overview</button>
+      <button class="nav-tab" role="tab" aria-selected="false" data-view="workbench"><span>⌁</span>Workbench</button>
+      <button class="nav-tab" role="tab" aria-selected="false" data-view="activity"><span>◉</span>Runs</button>
+      <button class="nav-tab" role="tab" aria-selected="false" data-view="projects"><span>▦</span>Projects</button>
+      <button class="nav-tab" role="tab" aria-selected="false" data-view="team"><span>⌬</span>Team</button>
+      <button class="nav-tab" role="tab" aria-selected="false" data-view="platform"><span>⌘</span>Platform</button>
+      <button class="nav-tab" role="tab" aria-selected="false" data-view="governance"><span>◇</span>Trust</button>
+      <button class="nav-tab" role="tab" aria-selected="false" data-view="contact"><span>↗</span>Contact</button>
+      <button class="nav-tab" role="tab" aria-selected="false" data-view="account"><span>◎</span>Account</button>
+    </nav>
+    <div class="top-actions">
+      <span class="connection"><span></span> LOCAL</span>
+      <div class="action-menu">
+        <button class="icon-button" id="import-trigger" aria-label="Import cases" title="Import cases">↥</button>
+        <a class="icon-button" href="/api/export" download aria-label="Export workspace" title="Export workspace">↧</a>
+      </div>
+      <button class="btn btn-primary" id="new-case">＋ New case</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <section class="app-view active" id="view-overview" data-view-panel="overview" role="tabpanel">
+      <section class="hero" id="interactive-hero">
+        <div class="hero-copy">
+          <div class="eyebrow"><i></i> QA OPERATIONS <span>/</span> LOCAL EVIDENCE</div>
+          <h1>Evidence that <em>moves with the problem.</em></h1>
+          <p>Translate unclear reports into deterministic scenarios, inspect what the browser observed and export test code your team can trust.</p>
+          <div class="hero-actions"><button class="btn btn-primary" data-view-jump="workbench">Open workbench <span>↗</span></button><button class="btn btn-quiet" data-view-jump="activity">View activity</button></div>
+        </div>
+        <div class="hero-art earth-stage" id="signal-field" aria-label="Interactive particle Earth">
+          <canvas id="earth-canvas"></canvas>
+          <div class="earth-orbit orbit-one"></div><div class="earth-orbit orbit-two"></div>
+          <div class="earth-hud hud-north">N / 71.2°</div><div class="earth-hud hud-signal">LIVE PLANETARY SIGNAL</div>
+          <div class="signal-coordinate">ROT <b id="signal-x">00</b> / TILT <b id="signal-y">00</b></div>
+          <div class="earth-city" id="earth-city"><strong>Bogotá, Colombia</strong><small>4.7110° N, 74.0721° W</small></div>
+          <button class="earth-locate" id="earth-locate" type="button">⌖ Detect my city</button>
+        </div>
+      </section>
+
+      <section class="overview-block">
+        <div class="section-heading"><div><span class="kicker">LIVE WORKSPACE</span><h2>A clear read on quality.</h2></div><p>Local metrics update whenever a scenario is replayed.</p></div>
+        <div class="metrics" aria-label="Workspace metrics">
+          <article class="metric"><div class="metric-top"><span>Tracked cases</span><span class="metric-icon blue">▦</span></div><b id="metric-cases">—</b><small>In local workspace</small></article>
+          <article class="metric"><div class="metric-top"><span>Replay sessions</span><span class="metric-icon violet">↻</span></div><b id="metric-runs">—</b><small>Recorded evidence</small></article>
+          <article class="metric"><div class="metric-top"><span>Passing runs</span><span class="metric-icon green">✓</span></div><b id="metric-passing">—</b><small>Verified scenarios</small></article>
+          <article class="metric"><div class="metric-top"><span>Failing runs</span><span class="metric-icon rose">!</span></div><b id="metric-failing">—</b><small>Reproduced defects</small></article>
+          <article class="metric"><div class="metric-top"><span>Pass rate</span><span class="metric-icon cyan">◔</span></div><b id="metric-rate">—</b><small>Across local runs</small></article>
+        </div>
+      </section>
+
+      <section class="flow-section">
+        <div class="section-heading"><div><span class="kicker">WORKFLOW</span><h2>From report to proof.</h2></div><p>Three focused stages. No external services.</p></div>
+        <div class="flow-grid">
+          <article><span>01</span><div class="flow-icon">⌁</div><h3>Structure</h3><p>Turn a report into explicit, reviewable browser steps.</p></article>
+          <article><span>02</span><div class="flow-icon">◉</div><h3>Replay</h3><p>Run each interaction against the controlled local sandbox.</p></article>
+          <article><span>03</span><div class="flow-icon">⌘</div><h3>Ship</h3><p>Inspect evidence and export a portable Playwright test.</p></article>
+        </div>
+      </section>
+    </section>
+
+    <section class="app-view" id="view-workbench" data-view-panel="workbench" role="tabpanel" hidden>
+      <div class="page-intro"><div><span class="kicker">TEST OPERATIONS</span><h1>Reproduction workbench</h1><p>Build, replay and inspect deterministic QA scenarios.</p></div><span class="mode-pill"><i></i> BUNDLED SANDBOX</span></div>
+      <section class="workbench">
+        <aside class="panel cases-panel">
+          <div class="panel-heading"><div><h2>Case library</h2><p>Reported issues & test scenarios</p></div><span id="case-count" class="panel-count">0</span></div>
+          <div class="case-search"><span>⌕</span><input id="case-search" type="search" placeholder="Search incidents..." aria-label="Search cases" /></div>
+          <div class="case-filters" aria-label="Filter cases"><button class="filter active" data-filter="all">All</button><button class="filter" data-filter="critical">Critical</button><button class="filter" data-filter="high">High</button><button class="filter" data-filter="medium">Medium</button><button class="filter" data-filter="low">Low</button></div>
+          <label class="sort-control">Sort <select id="case-sort"><option value="updated">Recently updated</option><option value="severity">Severity</option><option value="title">Title A–Z</option></select></label>
+          <div id="case-list" class="case-list" role="listbox" aria-label="Test cases" aria-live="polite"></div>
+          <div class="panel-foot"><span class="dot dot-cyan"></span> Stored locally on this computer</div>
+        </aside>
+
+        <section class="panel workspace-panel">
+          <div class="panel-heading main-heading"><div class="heading-overline">SELECTED REPRODUCTION</div><div class="heading-row"><h2 id="selected-title">Choose a case</h2><span id="selected-severity" class="severity medium">MEDIUM</span></div><p id="selected-desc">Select a scenario to review its steps and evidence.</p></div>
+          <div class="case-toolbar"><div id="case-source"><span class="tiny-label">SOURCE</span><b>—</b></div><div id="case-updated"><span class="tiny-label">UPDATED</span><b>—</b></div><div class="case-toolbar-actions"><button class="btn btn-quiet sm" id="edit-case">✎ Edit</button><button class="btn btn-quiet sm" id="duplicate-case">⧉ Duplicate</button><button class="btn btn-danger-ghost sm" id="delete-case" title="Delete case">⌫</button></div></div>
+          <div class="pane-divider"><span>EXECUTION PLAN</span><span id="step-indicator">0 STEPS</span></div>
+          <div class="step-list" id="step-list"></div>
+          <div class="replay-controls"><button class="btn btn-primary run-btn" id="run-case">▶ Run reproduction</button><button class="btn btn-outline" id="download-spec">↓ Export Playwright</button></div>
+          <div class="pane-divider"><span>LIVE BROWSER SANDBOX</span><span class="sandbox-badge">◉ LOCAL DEMO</span></div>
+          <div class="browser">
+            <div class="browser-chrome"><div class="browser-dots"><i></i><i></i><i></i></div><div class="browser-address" id="browser-address">127.0.0.1 / sandbox / shop</div><button id="refresh-preview" aria-label="Reload demo sandbox" title="Reload demo">↻</button></div>
+            <iframe title="Local test environment" id="sandbox-frame" src="/sandbox/shop" sandbox="allow-scripts allow-same-origin"></iframe>
+          </div>
+        </section>
+
+        <aside class="panel inspector-panel">
+          <div class="panel-heading"><div><h2>Trace inspector</h2><p>Observed behavior & evidence</p></div><span class="inspector-mark">⌁</span></div>
+          <div class="inspector-tabs"><button class="inspector-tab active" data-inspector="evidence">Evidence</button><button class="inspector-tab" data-inspector="code">Test code</button><button class="inspector-tab" data-inspector="json">JSON</button></div>
+          <div id="inspector-body" class="inspector-body"></div>
+          <div class="inspector-footer"><p><span class="dot dot-cyan"></span> Replayed in the local browser sandbox</p><small>For real sites, execute exported specs in Playwright.</small></div>
+        </aside>
+      </section>
+    </section>
+
+    <section class="app-view" id="view-activity" data-view-panel="activity" role="tabpanel" hidden>
+      <div class="page-intro"><div><span class="kicker">EXECUTION LOG</span><h1>Activity & evidence</h1><p>Recent local browser reproductions and their recorded outcomes.</p></div><button class="btn btn-quiet" id="copy-latest">Copy latest evidence ↗</button></div>
+      <section class="activity-summary">
+        <article><span>RUN HEALTH</span><strong id="activity-rate">—</strong><small>Current pass rate</small></article>
+        <article><span>TOTAL SIGNALS</span><strong id="activity-total">—</strong><small>Saved replays</small></article>
+        <article><span>STORAGE</span><strong>LOCAL</strong><small>No cloud transmission</small></article>
+      </section>
+      <section class="bottom-panel panel">
+        <div class="panel-heading"><div><h2>Execution history</h2><p>Newest runs appear first</p></div><span class="mode-pill"><i></i> LIVE</span></div>
+        <div class="history-wrap"><table><thead><tr><th>SCENARIO</th><th>RESULT</th><th>STEPS</th><th>DURATION</th><th>EXECUTED</th></tr></thead><tbody id="history-body"><tr><td colspan="5">No runs recorded yet</td></tr></tbody></table></div>
+      </section>
+    </section>
+
+    <section class="app-view" id="view-governance" data-view-panel="governance" role="tabpanel" hidden>
+      <div class="page-intro"><div><span class="kicker">TRUST CENTER</span><h1>Private by architecture.</h1><p>Clear controls, explicit limitations and no hidden data flows.</p></div><span class="mode-pill"><i></i> NO TRACKING</span></div>
+      <section class="governance-grid">
+        <button data-doc="privacy"><span>01</span><div class="governance-icon">◌</div><h2>Privacy</h2><p>What stays on this computer and how to remove it.</p><em>Read policy ↗</em></button>
+        <button data-doc="security"><span>02</span><div class="governance-icon">⌬</div><h2>Security</h2><p>Current safeguards and boundaries of this local build.</p><em>Review controls ↗</em></button>
+        <button data-doc="storage"><span>03</span><div class="governance-icon">▱</div><h2>Storage</h2><p>A complete inventory of files and browser preferences.</p><em>View inventory ↗</em></button>
+        <button data-doc="terms"><span>04</span><div class="governance-icon">⌁</div><h2>Terms</h2><p>Responsible use and production-readiness limitations.</p><em>Read terms ↗</em></button>
+      </section>
+    </section>
+
+    <section class="app-view" id="view-projects" data-view-panel="projects" role="tabpanel" hidden>
+      <div class="page-intro"><div><span class="kicker">QUALITY PORTFOLIO</span><h1>Projects & environments</h1><p>Persistent PostgreSQL-backed workspaces for fictional product teams.</p></div><button class="btn btn-primary" id="new-project">＋ New project</button></div>
+      <section class="project-toolbar panel"><div><span class="dot dot-cyan"></span><strong id="database-status">DATABASE CONNECTING</strong><small>Operational data source</small></div><div><strong id="project-total">—</strong><small>Active projects</small></div><div><strong>3</strong><small>Demo environments</small></div></section>
+      <section class="project-grid" id="project-grid"></section>
+    </section>
+
+    <section class="app-view" id="view-team" data-view-panel="team" role="tabpanel" hidden>
+      <div class="page-intro"><div><span class="kicker">ACCESS MATRIX</span><h1>Team & permissions</h1><p>Role-aware demonstration accounts with server-enforced administrative access.</p></div><span class="mode-pill"><i></i> ROLE ENFORCED</span></div>
+      <section class="team-grid" id="team-grid"></section>
+      <section class="role-matrix panel"><div class="panel-heading"><div><h2>Permission matrix</h2><p>Capabilities applied by the server</p></div></div><div class="matrix-table"><div><strong>Capability</strong><strong>Admin</strong><strong>Engineer</strong><strong>Viewer</strong></div><div><span>Manage projects</span><b>✓</b><b>—</b><b>—</b></div><div><span>Create & replay cases</span><b>✓</b><b>✓</b><b>—</b></div><div><span>Export evidence</span><b>✓</b><b>✓</b><b>✓</b></div></div></section>
+    </section>
+
+    <section class="app-view" id="view-platform" data-view-panel="platform" role="tabpanel" hidden>
+      <div class="page-intro"><div><span class="kicker">TRACEPROOF CONTROL PLANE</span><h1>Production capabilities, locally verifiable.</h1><p>Every roadmap capability has an executable portfolio adapter. External providers stay in clearly labelled simulation mode until credentials are supplied.</p></div><span class="mode-pill"><i></i> 15 MODULES ONLINE</span></div>
+      <section class="platform-metrics">
+        <article><span>WORKER POOL</span><strong>03</strong><small>Chromium · Firefox · WebKit</small></article><article><span>RELEASE</span><strong id="release-readiness">—</strong><small>Readiness score</small></article><article><span>FLAKY TESTS</span><strong id="flaky-count">—</strong><small>Detected transitions</small></article><article><span>REGIONS</span><strong>03</strong><small>Bogotá · Virginia · Frankfurt</small></article>
+      </section>
+      <section class="platform-grid">
+        <article class="platform-card featured"><div class="module-no">01</div><span class="kicker">PLAYWRIGHT WORKERS</span><h2>Isolated multi-browser execution</h2><p>Runs an isolated worker manifest for Chromium, Firefox and WebKit and produces trace, screenshot and video artifact descriptors.</p><button class="btn btn-primary" data-platform-action="playwright.run">Run worker matrix ↗</button><pre id="worker-output">Awaiting execution.</pre></article>
+        <article class="platform-card"><div class="module-no">02</div><span class="kicker">TRACE INGESTION</span><h2>Index trace.zip</h2><p>Inspect a Playwright trace locally and register its file inventory.</p><label class="file-action">Choose trace.zip<input id="trace-file" type="file" accept=".zip,application/zip"></label><pre id="trace-output">No trace selected.</pre></article>
+        <article class="platform-card featured"><div class="module-no">03</div><span class="kicker">ASSISTED AUTHORING</span><h2>Report → structured test</h2><textarea id="ai-report" rows="4" placeholder="Describe a defect, for example: cart confirmation is missing after adding an item"></textarea><button class="btn btn-primary" id="generate-case">Generate reviewable case</button><pre id="ai-output">Human review is required before saving.</pre></article>
+        <article class="platform-card"><div class="module-no">04</div><span class="kicker">INTEGRATIONS</span><h2>GitHub · Jira · Slack</h2><div id="integration-list" class="integration-list"></div></article>
+        <article class="platform-card"><div class="module-no">05–07</div><span class="kicker">IDENTITY & EVIDENCE</span><h2>SSO, MFA, tenant policy</h2><p>Configures identity and tenant policy, an AES-256-GCM evidence-storage adapter, and signs the current audit chain.</p><div class="button-row"><button class="btn btn-outline" data-platform-action="sso.configure">Configure identity</button><button class="btn btn-outline" data-platform-action="audit.sign">Sign audit</button></div><pre id="identity-output">Policy not configured.</pre></article>
+        <article class="platform-card"><div class="module-no">08–10</div><span class="kicker">AUTOMATION</span><h2>Nightly agents & notifications</h2><div id="schedule-list"></div><button class="btn btn-outline" data-platform-action="notification.send">Send regression digest</button><pre id="automation-output">No delivery yet.</pre></article>
+        <article class="platform-card featured"><div class="module-no">11–13</div><span class="kicker">QUALITY INTELLIGENCE</span><h2>Trends, devices & regions</h2><div class="trend-chart" id="trend-chart" aria-label="Pass rate trend"><i style="--v:52%"></i><i style="--v:68%"></i><i style="--v:61%"></i><i style="--v:78%"></i><i style="--v:88%"></i><i style="--v:82%"></i></div><p>Cross-browser matrix, regional execution and release readiness share the same run evidence.</p></article>
+        <article class="platform-card"><div class="module-no">14</div><span class="kicker">PUBLIC API & SDK</span><h2>Node and Python clients</h2><button class="btn btn-outline" data-platform-action="apikey.create">Create API key</button><pre id="sdk-output">Keys are shown once and stored only as SHA-256 hashes.</pre></article>
+        <article class="platform-card"><div class="module-no">15</div><span class="kicker">DEPLOYMENT</span><h2>TLS-ready operations</h2><ul><li>Non-root container</li><li>Read-only filesystem</li><li>PostgreSQL health checks</li><li>Secrets and backup adapters</li></ul><span class="status-ribbon">LOCAL STACK HEALTHY</span></article>
+      </section>
+    </section>
+
+    <section class="app-view" id="view-contact" data-view-panel="contact" role="tabpanel" hidden>
+      <div class="page-intro"><div><span class="kicker">CONTACT NODE</span><h1>Build something verifiable.</h1><p>Messages are stored in the local PostgreSQL demo and never transmitted externally.</p></div><a class="btn btn-quiet" href="https://github.com/Name-less56" target="_blank" rel="noreferrer">GitHub profile ↗</a></div>
+      <section class="contact-layout">
+        <div class="contact-card"><span class="kicker">DEVELOPER</span><h2>Seth Castañeda</h2><p>Quality engineering, secure product systems and interactive interfaces.</p><a href="https://github.com/Name-less56" target="_blank" rel="noreferrer">github.com/Name-less56 ↗</a><div class="contact-lines"><span>LOCAL TIME</span><b>America / Bogotá</b><span>RESPONSE MODE</span><b>Portfolio demonstration</b></div></div>
+        <form class="contact-form panel" id="contact-form"><div class="panel-heading"><div><h2>Send a local message</h2><p>Functional demo submission backed by PostgreSQL</p></div></div><div class="contact-fields"><label>Name<input id="contact-name" maxlength="100" required></label><label>Email<input id="contact-email" type="email" maxlength="180" required></label><label class="full">Subject<input id="contact-subject" maxlength="140" required></label><label class="full">Message<textarea id="contact-message" rows="5" maxlength="3000" required></textarea></label><label class="consent full"><input id="contact-consent" type="checkbox" required><span>I consent to storing this fictional demo message locally.</span></label><button class="btn btn-primary full" type="submit">Transmit to local node ↗</button></div></form>
+      </section>
+    </section>
+
+    <section class="app-view" id="view-account" data-view-panel="account" role="tabpanel" hidden>
+      <div class="page-intro"><div><span class="kicker">IDENTITY NODE</span><h1>Session & account</h1><p>Secure demo authentication with hashed passwords and HttpOnly sessions.</p></div><span class="mode-pill" id="account-state"><i></i> SIGNED OUT</span></div>
+      <section class="account-layout">
+        <form class="login-card panel" id="login-form"><div class="panel-heading"><div><h2>Demo sign in</h2><p>Credentials are limited to this review environment</p></div></div><div class="login-fields"><label>Email<input id="login-email" type="email" value="admin@traceproof.local" autocomplete="username" required></label><label>Password<input id="login-password" type="password" value="TraceProof!2026" autocomplete="current-password" required></label><button class="btn btn-primary" type="submit">Establish secure session</button><p class="demo-note">Admin: admin@traceproof.local / TraceProof!2026<br>Engineer: qa@traceproof.local / Quality!2026</p></div></form>
+        <div class="session-card panel"><div class="panel-heading"><div><h2>Current session</h2><p>Server-verified identity and infrastructure</p></div></div><div id="session-details" class="session-details"><span class="empty-state">No authenticated session.</span></div><button class="btn btn-danger-ghost hidden" id="logout-button">End session</button></div>
+      </section>
+    </section>
+
+    <footer><div>© 2026 TraceProof · <strong>Developed by: Seth Castañeda</strong></div><nav aria-label="Legal and product information"><button data-doc="privacy">Privacy</button><button data-doc="terms">Terms</button><button data-doc="security">Security</button><button data-doc="storage">Storage inventory</button></nav></footer>
+  </main>
+
+  <div id="modal-backdrop" class="modal-backdrop hidden" role="presentation">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal-heading"><div><span class="eyebrow">CASE EDITOR</span><h2 id="modal-title">New reproduction case</h2></div><button id="modal-close" class="icon-close" aria-label="Close">×</button></div>
+      <form id="case-form">
+        <div class="form-grid"><label class="full">Incident title <input id="form-title" maxlength="130" placeholder="E.g. Cart confirmation does not appear" required /></label><label>Severity <select id="form-severity"><option value="critical">Critical</option><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></label><label>Reported via <input id="form-source" maxlength="100" value="Manual report" /></label><label class="full">Description <textarea id="form-description" rows="3" maxlength="2200" placeholder="What should happen? What happens instead?"></textarea></label></div>
+        <div class="steps-head"><h3>Reproduction steps</h3><button type="button" class="btn btn-outline sm" id="add-step">＋ Add step</button></div>
+        <p class="form-hint">Use <code>data-testid</code> values from the bundled sandbox. Supported routes: <code>/sandbox/shop</code> and <code>/sandbox/login</code>.</p>
+        <div id="step-editor" class="step-editor"></div>
+        <div class="modal-bottom"><span class="form-hint">The first step must be <b>Navigate</b>.</span><div><button class="btn btn-quiet" type="button" id="modal-cancel">Cancel</button><button class="btn btn-primary" type="submit">Save case</button></div></div>
+      </form>
+    </section>
+  </div>
+  <div id="project-backdrop" class="modal-backdrop hidden" role="presentation">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="project-modal-title">
+      <div class="modal-heading"><div><span class="eyebrow">PROJECT CONTROL</span><h2 id="project-modal-title">New project</h2></div><button id="project-close" class="icon-close" aria-label="Close project editor">×</button></div>
+      <form id="project-form"><div class="form-grid"><label>Project name<input id="project-name" maxlength="90" required></label><label>Project key<input id="project-key" maxlength="12" placeholder="NORTH" required></label><label class="full">Description<textarea id="project-description" rows="4" maxlength="500"></textarea></label><label>Accent color<input id="project-accent" type="color" value="#82f5d2"></label><label>Status<select id="project-status"><option value="active">Active</option><option value="archived">Archived</option></select></label></div><div class="modal-bottom"><span class="form-hint">Admin session required.</span><div><button class="btn btn-quiet" type="button" id="project-cancel">Cancel</button><button class="btn btn-primary" type="submit">Save project</button></div></div></form>
+    </section>
+  </div>
+  <input id="import-file" class="hidden" type="file" accept="application/json,.json" />
+  <div id="toast" role="status" class="toast" aria-live="polite"></div>
+
+  <div id="info-backdrop" class="modal-backdrop hidden" role="presentation">
+    <section class="modal info-modal" role="dialog" aria-modal="true" aria-labelledby="info-title">
+      <div class="modal-heading"><div><span class="eyebrow">PRODUCT INFORMATION</span><h2 id="info-title">Privacy</h2></div><button id="info-close" class="icon-close" aria-label="Close">×</button></div>
+      <div id="info-content" class="info-content"></div>
+    </section>
+  </div>
+
+  <aside id="privacy-banner" class="privacy-banner hidden" aria-label="Local storage notice">
+    <div><strong>No tracking. No advertising cookies.</strong><p>Operational data stays in the local PostgreSQL volume. Only your notice choice may be saved in this browser.</p></div>
+    <div class="privacy-actions"><button class="btn btn-quiet" id="privacy-session">Do not save</button><button class="btn btn-primary" id="privacy-remember">Understood</button></div>
+  </aside>
+</body>
+</html>
