@@ -8,11 +8,12 @@ import { PostgresStore } from './lib/postgres-store.js';
 import { AuthService, clearSessionCookie, cookieValue, sessionCookie } from './lib/auth.js';
 import { apiError, cleanCase, cleanProject, cleanRun, getMetrics } from './lib/domain.js';
 import { generateSpec, outputFilename } from './lib/generator.js';
+import { PlaywrightRunner } from './lib/playwright-runner.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pub = path.join(here, 'public');
 const sandbox = path.join(here, 'sandbox');
-const contentType = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon' };
+const contentType = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.woff2': 'font/woff2' };
 const json = (res, status, value) => send(res, status, JSON.stringify(value), 'application/json; charset=utf-8');
 const baseHeaders = {
   'x-content-type-options': 'nosniff',
@@ -46,7 +47,7 @@ async function staticFile(req, res, filename, root, policy) {
   } catch (e) { if (e.code === 'ENOENT' || e.code === 'EISDIR') return send(res, 404, 'Not found'); throw e; }
 }
 
-export async function createApp({ dbPath, databaseUrl = process.env.DATABASE_URL } = {}) {
+export async function createApp({ dbPath, databaseUrl = process.env.DATABASE_URL, runner = new PlaywrightRunner({ artifactDir: process.env.ARTIFACT_DIR || path.join(here, 'data', 'artifacts') }) } = {}) {
   const store = dbPath
     ? await new Store(dbPath).open()
     : databaseUrl
@@ -59,7 +60,9 @@ export async function createApp({ dbPath, databaseUrl = process.env.DATABASE_URL
     try {
       if (route.startsWith('/api/') && !['GET', 'HEAD'].includes(req.method)) {
         const origin = req.headers.origin;
-        if (origin && origin !== `${url.protocol}//${req.headers.host}`) throw apiError('Cross-origin writes are not allowed', 403);
+        const forwardedProto = process.env.TRUST_PROXY === '1' ? String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() : '';
+        const expected = `${forwardedProto ? `${forwardedProto}:` : url.protocol}//${req.headers.host}`;
+        if (origin && origin !== expected) throw apiError('Cross-origin writes are not allowed', 403);
         if (req.headers['sec-fetch-site'] === 'cross-site') throw apiError('Cross-site writes are not allowed', 403);
       }
       const secureRequest = Boolean(req.socket.encrypted) || String(req.headers['x-forwarded-proto'] || '').split(',')[0].trim() === 'https';
@@ -87,7 +90,7 @@ export async function createApp({ dbPath, databaseUrl = process.env.DATABASE_URL
         const state = store.get(); return json(res, 200, { ...state, metrics: getMetrics(state), infrastructure: { database: store.kind, runtime: 'node', mode: databaseUrl ? 'docker-ready' : 'local-fallback' }, session: { authenticated: Boolean(user), user } });
       }
       if (route === '/api/sdk' && req.method === 'GET') return json(res, 200, {
-        version: '2.1.0', baseUrl: `${url.protocol}//${req.headers.host}`, authentication: 'Bearer tp_live_*',
+        version: '2.2.0', baseUrl: `${url.protocol}//${req.headers.host}`, authentication: 'Bearer tp_live_*',
         examples: { node: "const state = await fetch(base + '/api/state', {headers:{Authorization:'Bearer '+key}}).then(r=>r.json())", python: "requests.get(f'{base}/api/state', headers={'Authorization': f'Bearer {key}'})" }
       });
       if (route === '/api/trends' && req.method === 'GET') {
@@ -146,6 +149,26 @@ export async function createApp({ dbPath, databaseUrl = process.env.DATABASE_URL
           'content-disposition': `attachment; filename="${outputFilename(entry)}"`
         });
       }
+      if (route === '/api/runner' && req.method === 'GET') return json(res, 200, await runner.check());
+      if (route === '/api/runs/playwright' && req.method === 'POST') {
+        requireRole('engineer');
+        const input = await requestBody(req);
+        const entry = store.get().cases.find(c => c.id === String(input.caseId || ''));
+        if (!entry) throw apiError('Case not found', 404);
+        const runId = randomUUID();
+        const result = await runner.run(entry, { baseUrl: `http://127.0.0.1:${req.socket.localPort}`, runId });
+        const run = cleanRun({ caseId: entry.id, ...result }, store.get().cases, { source: 'playwright-chromium', id: runId });
+        await store.update(state => { state.runs.unshift(run); state.runs = state.runs.slice(0, 120); });
+        return json(res, 201, run);
+      }
+      const artifact = route.match(/^\/api\/artifacts\/([\w-]+)\/(trace\.zip|screenshot\.png)$/);
+      if (artifact && req.method === 'GET') {
+        const kind = artifact[2] === 'trace.zip' ? 'trace' : 'screenshot';
+        try {
+          const body = await fs.readFile(runner.artifactPath(artifact[1], kind));
+          return send(res, 200, body, kind === 'trace' ? 'application/zip' : 'image/png', kind === 'trace' ? { 'content-disposition': `attachment; filename="traceproof-${artifact[1].slice(0, 8)}-trace.zip"` } : {});
+        } catch { throw apiError('Artifact not found', 404); }
+      }
       if (route === '/api/runs' && req.method === 'POST') {
         const run = cleanRun(await requestBody(req), store.get().cases);
         await store.update(state => { state.runs.unshift(run); state.runs = state.runs.slice(0, 120); });
@@ -198,7 +221,9 @@ export async function createApp({ dbPath, databaseUrl = process.env.DATABASE_URL
       if (route === '/sandbox/shop' || route === '/sandbox/login') {
         return staticFile(req, res, route.split('/').at(-1) + '.html', sandbox, sandboxPolicy);
       }
-      if (/^\/(styles\.css|app\.js|world-points\.js|jszip\.min\.js|favicon\.svg)$/.test(route)) return staticFile(req, res, route.slice(1), pub, appPolicy);
+      const fontFile = route.match(/^\/fonts\/(chakra-petch-latin-(?:500|600|700)-normal\.woff2)$/);
+      if (fontFile) return staticFile(req, res, path.join('fonts', fontFile[1]), pub, appPolicy);
+      if (/^\/(styles\.css|app\.js|world-points\.js|globe\.js|cities\.js|icons\.js|jszip\.min\.js|favicon\.svg)$/.test(route)) return staticFile(req, res, route.slice(1), pub, appPolicy);
       send(res, 404, 'Not found');
     } catch (e) {
       if (!route.startsWith('/api/')) return send(res, e.status || 500, e.status ? e.message : 'Internal error');

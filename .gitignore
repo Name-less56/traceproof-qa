@@ -21,3 +21,5 @@ postgres-data/
 .paradev/
 .idea/
 .vscode/
+.claude/
+data/artifacts/
