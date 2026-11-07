@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 96" role="img" aria-labelledby="t">
+  <title id="t">TraceProof</title>
+  <defs>
+    <filter id="g" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <g transform="translate(14 14) scale(2.125)" filter="url(#g)">
+    <path d="M6 2.5h15.5l8 8V29.5H2.5V6z" fill="#3dffd012" stroke="#3dffd0" stroke-width="1.6"/>
+    <path d="M6.5 18.5h5l2.4-6 4.2 10 2.6-6.5h4.8" fill="none" stroke="#ff3d9a" stroke-width="2" stroke-linecap="square"/>
+    <path d="M25.5 14.6l1.9 1.9-1.9 1.9-1.9-1.9z" fill="#fff"/>
+  </g>
+  <text x="100" y="54" fill="#f3f6ff" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="38" font-weight="750" letter-spacing="-1.2">Trace<tspan fill="#3dffd0">Proof</tspan></text>
+  <text x="102" y="78" fill="#959fb6" font-family="Inter, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="500">Developed by: Seth Castañeda</text>
+</svg>
