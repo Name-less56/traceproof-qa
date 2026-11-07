@@ -1,0 +1,28 @@
+# One-click Render Blueprint: Docker web service + managed PostgreSQL.
+# Render terminates TLS and forwards x-forwarded-proto, so TRUST_PROXY=1.
+services:
+  - type: web
+    name: traceproof
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: NODE_ENV
+        value: production
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ARTIFACT_DIR
+        value: /tmp/artifacts
+      - key: DATABASE_URL
+        fromDatabase:
+          name: traceproof-db
+          property: connectionString
+
+databases:
+  - name: traceproof-db
+    plan: free
+    databaseName: traceproof
+    user: traceproof
