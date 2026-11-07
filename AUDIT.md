@@ -34,3 +34,19 @@ No critical issue remained after the review. The application is intentionally lo
 - Isolated Playwright workers with timeouts, network allowlists, artifact redaction, and malware scanning.
 - Object storage for traces/screenshots, secret management, observability, rate limits, and incident response.
 - CI provider and repository connection for real pull requests and releases.
+
+## UI / front-end audit — 2.2 (2026-11-07)
+
+Fixed:
+- Three stacked CSS layers overrode each other (base, "cyberpunk control layer", "planetary v2.1"); replaced by one token-based design system.
+- Body/label text used colors down to ~3.2:1 contrast at 7–9px; text tokens now start at 4.9:1 and UI text at 11px+.
+- Navigation overflowed and truncated tabs at 1280–1440px; replaced with 5 primary tabs + "More" menu and a top sheet below 1180px.
+- Trend chart bars used inline `style` attributes, which the app CSP (`style-src 'self'`) silently blocked.
+- UI copy claimed PostgreSQL even when the JSON fallback was active.
+- Recorded run duration included cosmetic delays.
+- Globe: 2D canvas redrew ~36k points per frame on the CPU; now rendered on the GPU (WebGL) with a 2D fallback, paused off-screen and in hidden tabs.
+
+Known / not changed:
+- Case creation and replay do not require a session, while the permission matrix says viewers cannot create cases.
+- Platform modules (workers, SSO, AES evidence storage, notifications) are simulation adapters; the UI now labels them as such.
+- Assisted authoring is keyword-based, not an LLM.

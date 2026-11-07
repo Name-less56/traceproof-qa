@@ -19,7 +19,7 @@ test('GET state includes sample cases and no initial run', async()=>{
 });
 test('static index and built-in sandbox routes render',async()=>{
   const app=await localServer();
-  try {for (const p of ['/','/styles.css','/app.js','/world-points.js','/jszip.min.js','/sandbox/shop','/sandbox/login']) {const r=await fetch(app.url+p); assert.equal(r.status,200,p); assert.ok((await r.text()).length>100); assert.equal(r.headers.get('x-content-type-options'),'nosniff');} }finally{await app.close();}
+  try {for (const p of ['/','/styles.css','/app.js','/globe.js','/cities.js','/icons.js','/fonts/chakra-petch-latin-600-normal.woff2','/world-points.js','/jszip.min.js','/sandbox/shop','/sandbox/login']) {const r=await fetch(app.url+p); assert.equal(r.status,200,p); assert.ok((await r.text()).length>100); assert.equal(r.headers.get('x-content-type-options'),'nosniff');} }finally{await app.close();}
 });
 test('main page has hardened browser policy without remote or inline scripts',async()=>{
   const app=await localServer();
@@ -102,6 +102,35 @@ test('platform adapters require admin and persist audit state',async()=>{
     const login=await fetch(app.url+'/api/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email:'admin@traceproof.local',password:'TraceProof!2026'})});const cookie=login.headers.get('set-cookie');
     const action=await fetch(app.url+'/api/platform/action',{method:'POST',headers:{'content-type':'application/json',cookie},body:JSON.stringify({action:'playwright.run'})});assert.equal(action.status,200);assert.equal((await action.json()).job.status,'completed');
     const state=await(await fetch(app.url+'/api/state')).json();assert.equal(state.platform.audit[0].action,'playwright.run');
-    const sdk=await(await fetch(app.url+'/api/sdk')).json();assert.equal(sdk.version,'2.1.0');
+    const sdk=await(await fetch(app.url+'/api/sdk')).json();assert.equal(sdk.version,'2.2.0');
   }finally{await app.close();}
+});
+
+test('Playwright runner endpoints: status, auth, persisted run and artifact guard', async()=>{
+  const dir = await mkdtemp(path.join(tmpdir(),'traceproof-runner-'));
+  const fakeRunner = {
+    artifactDir: dir,
+    check: async () => ({ available: true, browser: 'chromium' }),
+    artifactPath: (id, kind) => { if (!/^[\w-]+$/.test(id)) throw new Error('bad id'); return path.join(dir, `${id}.${kind === 'trace' ? 'zip' : 'png'}`); },
+    run: async (testCase) => ({ status: 'failed', durationMs: 42, events: testCase.steps.slice(0, 2).map((s, i) => ({ status: i === 1 ? 'failed' : 'passed', detail: 'fake', durationMs: 21, url: '/sandbox/shop', snapshot: '' })) })
+  };
+  const server = await createApp({ dbPath: path.join(dir,'data.json'), runner: fakeRunner });
+  await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
+  const url=`http://127.0.0.1:${server.address().port}`;
+  const post=(p,body,headers={})=>fetch(url+p,{method:'POST',headers:{'content-type':'application/json',...headers},body:JSON.stringify(body)});
+  try {
+    assert.deepEqual(await (await fetch(url+'/api/runner')).json(), { available: true, browser: 'chromium' });
+    const caseId=(await (await fetch(url+'/api/state')).json()).cases[0].id;
+    assert.equal((await post('/api/runs/playwright',{caseId})).status,401);
+    const login=await post('/api/login',{email:'qa@traceproof.local',password:'Quality!2026'});
+    const cookie=login.headers.get('set-cookie').split(';')[0];
+    const run=await post('/api/runs/playwright',{caseId},{cookie});
+    assert.equal(run.status,201);
+    const body=await run.json();
+    assert.equal(body.source,'playwright-chromium'); assert.equal(body.status,'failed'); assert.equal(body.events.length,2);
+    const state=await (await fetch(url+'/api/state')).json();
+    assert.equal(state.runs[0].id, body.id);
+    assert.equal((await fetch(url+`/api/artifacts/${body.id}/trace.zip`)).status,404);
+    assert.equal((await fetch(url+'/api/artifacts/..%2Fdata/trace.zip')).status,404);
+  } finally { await new Promise(ok=>server.close(ok)); await rm(dir,{recursive:true,force:true}); }
 });
