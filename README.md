@@ -13,6 +13,8 @@ Developed by: **Seth Castañeda**
 
 </div>
 
+<img src="docs/screenshots/overview.png" width="100%" alt="TraceProof overview: neon globe lighting up the visitor's city, live metrics and command bar" />
+
 ## Why TraceProof?
 
 A defect report is useful only when another engineer can reproduce it. TraceProof keeps the steps, observed behavior, and test code together in one focused quality-engineering workspace.
@@ -40,6 +42,29 @@ npm test
 ```
 
 ## Features that work
+
+### Version 2.2 command interface
+
+- **Real Playwright runner** — “Real Chromium” runs a case in an isolated headless Chromium on the server, records a genuine **`trace.zip`** and a final screenshot, and stores the run next to the DOM replays (requires a signed-in engineer/admin and `npm run playwright:install`).
+- **Auto-hiding command bar** — collapses into a neon line with a scan spark when you scroll down and unfolds with a glitch reveal when you scroll up, hover the top edge or press the **NAV** tab. Cyberpunk SVG icon set and a full-width search.
+- **Globe that reacts to evidence** — every finished run fires a green / red shockwave from your city along the hub arcs; the globe only rotates on horizontal drags so vertical gestures keep scrolling the page.
+- **Top command bar** with a liquid tab indicator, a "More" drop-down for secondary views, a scroll-progress line and a top sheet menu on tablet/mobile.
+- **Command palette** (`⌘K` / `Ctrl K`) to jump to any view, open any case, run, export or change replay speed. Shortcuts: `1`–`9` views, `N` new case, `R` run, `/` search.
+- **WebGL planetary globe** (GPU point cloud, ~73k points) with atmosphere, graticule, scan sweep, drag-to-rotate with inertia, keyboard control and a Canvas 2D fallback. The visitor's city is lit up from the browser time zone (no network, no prompt); precise location is optional and consent-based.
+- **Live replay**: speed control (Turbo / Normal / Slow-mo), progress bar and the element under test highlighted inside the sandbox (amber → green / red).
+- **Runs view** with result filters, search, clickable rows, median duration and a cumulative pass-rate sparkline; Platform trend bars are computed from real runs.
+- **Overview** with animated metrics, pass-rate ring, recent-signal feed and one-click quick replay.
+- Rebuilt **Neon Ops** design system: single token layer, higher-contrast text, cyan / magenta / violet cyberpunk palette.
+
+### Screenshots
+
+| Workbench · replay + Chromium artifacts | Runs · filters + trend |
+|---|---|
+| <img src="docs/screenshots/workbench.png" alt="Workbench after reproducing the cart defect" /> | <img src="docs/screenshots/runs.png" alt="Runs history with filters and pass-rate trend" /> |
+| **Command palette (⌘K)** | **Mobile top menu** |
+| <img src="docs/screenshots/palette.png" alt="Command palette" /> | <img src="docs/screenshots/mobile-menu.png" width="260" alt="Mobile navigation sheet" /> |
+
+Regenerate them from the live app with `npm run screenshots`.
 
 ### Version 2.1 platform
 
@@ -129,6 +154,27 @@ traceproof-qa/
 | `POST` | `/api/runs` | Persist a local replay report |
 | `GET` | `/api/export` | Download workspace JSON |
 | `POST` | `/api/import` | Import cases from a JSON export |
+
+## Real browser runs (Playwright + trace.zip)
+
+```bash
+npm install
+npm run playwright:install   # downloads Chromium once
+npm start
+```
+
+Sign in (Account → Engineer or Admin), open the **Workbench** and press **Real Chromium**. The server launches an isolated headless Chromium context that can only reach the bundled sandbox, executes the steps, and saves:
+
+- `data/artifacts/<run-id>.zip` — a real Playwright trace (open with `npx playwright show-trace` or trace.playwright.dev)
+- `data/artifacts/<run-id>.png` — the final screenshot shown in the Trace inspector
+
+`GET /api/runner` reports availability. The Docker image (Alpine) does not ship Chromium, so in Docker the button stays disabled and the DOM replay is used.
+
+## Deploy a public demo (Render)
+
+`render.yaml` is a one-click Blueprint (Docker web service + free PostgreSQL). In Render: **New → Blueprint → select this repository**. It sets `HOST=0.0.0.0`, `TRUST_PROXY=1` (so the same-origin write check accepts the HTTPS origin behind Render's proxy) and wires `DATABASE_URL` automatically.
+
+> The demo accounts are public. Anyone with the URL can sign in as the demo admin, so treat a public deploy as a disposable showcase: no real data.
 
 ## Run exported Playwright specs
 

@@ -1,6 +1,6 @@
 {
   "name": "traceproof-qa",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "private": true,
   "description": "Local-first QA reproduction workspace with executable browser scenarios, evidence timeline and Playwright spec export.",
   "type": "module",
@@ -8,11 +8,13 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "test": "node --test tests/*.test.js",
-    "check": "node --check server.js && node --check public/app.js && node --test tests/*.test.js",
+    "check": "node --check server.js && node --check public/app.js && node --check public/globe.js && node --check public/icons.js && node --test tests/*.test.js",
     "ci": "npm run check && npm audit --omit=dev",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f app"
+    "docker:logs": "docker compose logs -f app",
+    "screenshots": "node scripts/capture-screenshots.mjs",
+    "playwright:install": "playwright install chromium"
   },
   "engines": {
     "node": ">=20"
